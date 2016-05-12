@@ -14,7 +14,7 @@ import scalaxy.loops._
 import arx.core.vec._
 
 class Light extends TWorldAuxData {
-	val MaxLight = 32
+	val MaxLight = 127
 
 	var global = Array(new VoxelGrid(MaxLight.toByte))
 	var globalColor = Array(Vec4f(1.1f,0.9f,0.8f,1.0f))
