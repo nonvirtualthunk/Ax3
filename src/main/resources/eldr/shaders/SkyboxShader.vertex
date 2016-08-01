@@ -1,0 +1,18 @@
+#version 150 core
+
+in vec3 Vertex;
+in vec2 TexCoord;
+in vec4 Color;
+
+out float untransformedZ;
+
+uniform vec3 vertexOriginOffset;
+uniform mat4 ModelViewMatrix;
+uniform mat4 ProjectionMatrix;
+
+void main (){
+	vec4 tmpv = ModelViewMatrix * vec4(Vertex,1.0);
+	untransformedZ = Vertex.z + 75.0;//tmpv.z  - pmod.z + 40.0;
+	gl_Position = ProjectionMatrix * tmpv;
+
+}

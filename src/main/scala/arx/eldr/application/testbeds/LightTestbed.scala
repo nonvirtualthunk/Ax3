@@ -8,14 +8,21 @@ package arx.eldr.application.testbeds
   */
 
 import arx.Prelude._
+import arx.core.Moddable
 import arx.core.datastructures.voxel.Talea
 import arx.core.datastructures.voxel.TaleaIterator
 import arx.core.datastructures.voxelregions.voxelregions.VoxelRegion
 import arx.core.units.UnitOfTime
 import arx.core.vec.coordinates.VoxelCoord
 import arx.eldr.game.archetypes.Material
+import arx.eldr.game.logic.light.LightComponent
+import arx.eldr.game.logic.light.StandardGlobalLightComputor
 import arx.eldr.game.world.data.Light
 import arx.eldr.game.world.data.Terrain
+import arx.eldr.graphics.environment.SkyboxGraphicsComponent
+import arx.eldr.graphics.environment.TerrainGraphicsComponent
+import arx.eldr.graphics.environment.WorldAttributeProfile
+import arx.eldr.graphics.environment.WorldShader
 import arx.engine.EngineCore
 import arx.engine.advanced.Engine
 import arx.engine.game.GameEngine
@@ -28,33 +35,48 @@ import arx.graphics.attributeprofiles.SimpleAttributeProfile
 import arx.graphics.pov.EyeCamera
 import arx.resource.ResourceManager
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL12
+import org.lwjgl.opengl.GL15
+
 import scala.language.postfixOps
 import scalaxy.loops._
 import arx.core.vec._
+import arx.eldr.graphics.entities.EntityGraphicsComponent
+import arx.engine.entity.GameEntity
 
 object LightTestbed extends Engine {
-	graphicsEngine.addComponent[BlockGraphics]
-	gameEngine.addComponent[LightGameComponent]
 
-	graphicsEngine.pov = {
-		val cam = new EyeCamera(Vec3f(0,0,15),Vec3f.UnitX,Vec3f.UnitZ)
-		cam.moveSpeed = Vec3f(0.35f)
-		cam.turnSpeed = Vec2f(0.7f)
-		cam
-	}
+	override def setUpEngine(): Unit = {
 
-	val terrain = world[Terrain]
-	terrain.setMaterialsInRegion(VoxelRegion(VoxelCoord.Center-20,VoxelCoord.Center+20), VoxelCoord.transformToRelative((x,y,z) => {
-		if (z == 0 || (x*x+y*y < 25 && z == 10)) {
-			Material.withName("stone")
-		} else {
-			Material.Sentinel
+		//	graphicsEngine.addComponent[BlockGraphics]
+		graphicsEngine.addComponent[TerrainGraphicsComponent]
+		graphicsEngine.addComponent[SkyboxGraphicsComponent]
+		//	gameEngine.addComponent[ExperimentalLightGameComponent]
+		gameEngine.addComponent[LightComponent]
+
+		graphicsEngine.pov = {
+			val cam = new EyeCamera(Vec3f(0,0,15),Vec3f.UnitX,Vec3f.UnitZ)
+			cam.moveSpeed = Vec3f(0.35f)
+			cam.turnSpeed = Vec2f(0.7f)
+			cam.viewDistance = 200.0f
+			cam
 		}
-	}))
+
+		val terrain = world[Terrain]
+		terrain.setMaterialsInRegion(VoxelRegion(VoxelCoord.Center-20,VoxelCoord.Center+20), VoxelCoord.transformToRelative((x,y,z) => {
+			if (z == 0 || (x*x+y*y < 25 && z == 10)) {
+				Material.withName("stone")
+			} else if (x == -20 && z <= 0) {
+				Material.withName("stone")
+			} else {
+				Material.Sentinel
+			}
+		}))
+	}
 
 }
 
-class LightGameComponent(eng:GameEngine,world:World) extends GameComponent(eng, world) {
+class ExperimentalLightGameComponent(eng:GameEngine) extends GameComponent(eng) {
 	override protected def initialize(): Unit = {
 		val index = 0
 
@@ -100,12 +122,13 @@ class LightGameComponent(eng:GameEngine,world:World) extends GameComponent(eng, 
 	}
 }
 
-class BlockGraphics(eng:GraphicsEngine, world : World) extends GraphicsComponent(eng, world) {
-	lazy val shader = ResourceManager.shader("shaders/Simple")
+class BlockGraphics(eng:GraphicsEngine) extends GraphicsComponent(eng) {
+//	lazy val shader = ResourceManager.shader("shaders/Simple")
+	lazy val shader = new WorldShader(world, pov)
 
 	lazy val textureBlock = new TextureBlock(1024,1024)
 
-	val vbo = new AVBO(SimpleAttributeProfile)
+	val vbo = new AVBO(WorldAttributeProfile)
 
 	override def draw(): Unit = {
 		GL.glSetState(GL11.GL_DEPTH_TEST, true)
@@ -117,7 +140,7 @@ class BlockGraphics(eng:GraphicsEngine, world : World) extends GraphicsComponent
 		textureBlock.minFilter = GL11.GL_NEAREST
 		textureBlock.bind()
 
-		vbo.solidifyIfNecessary()
+		vbo.solidifyIfNecessary(GL15.GL_STATIC_DRAW)
 		vbo.drawElements()
 	}
 
@@ -126,7 +149,7 @@ class BlockGraphics(eng:GraphicsEngine, world : World) extends GraphicsComponent
 			val region = VoxelRegion(VoxelCoord.Center-20,VoxelCoord.Center+20)
 			val terrain = world[Terrain]
 
-			val pb = SimpleAttributeProfile.createPointBuilder()
+			val pb = WorldAttributeProfile.createPointBuilder()
 			for (shifted <- (region.min >> Talea.dimensionPo2) to (region.max >> Talea.dimensionPo2)) {
 				val tpos = VoxelCoord(shifted << Talea.dimensionPo2)
 				val rpos = tpos.toObjectCoord
@@ -152,7 +175,9 @@ class BlockGraphics(eng:GraphicsEngine, world : World) extends GraphicsComponent
 									val p = Cardinals.centeredCubePoints(q)(k)
 									pb.setV(p.x + x.toFloat + rpos.x,p.y + y.toFloat + rpos.y,p.z + z.toFloat + rpos.z)
 									pb.setTC(tc(k))
-									pb.setC(lv,lv,lv,1.0f)
+//									pb.setC(lv,lv,lv,1.0f)
+									pb.setGL(1.0f,1.0f,1.0f,lv)
+									pb.setLL(0.0f,0.0f,0.0f,0.0f)
 									vbo.setPoint(vi + k, pb)
 								}
 								vbo.setIQuad(ii,vi)

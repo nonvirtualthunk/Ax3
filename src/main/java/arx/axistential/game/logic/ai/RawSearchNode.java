@@ -2,7 +2,6 @@ package arx.axistential.game.logic.ai;
 
 import arx.core.THasSortKey;
 import arx.core.vec.coordinates.MutableVoxelCoord;
-import arx.core.vec.coordinates.VoxelCoord;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,7 +15,6 @@ final public class  RawSearchNode implements THasSortKey {
         this._index = _index;
     }
 
-    @Override
     public float sortKey() {
         return f();
     }

@@ -35,13 +35,19 @@ class Terrain extends TWorldAuxData {
 		material(v) = 0.toShort
 	}
 
+	def setMaterialsInRegion(tup : (VoxelCoord,VoxelCoord), mat : Material): Unit = {
+		setMaterialsInRegion(VoxelRegion(tup._1,tup._2),mat)
+	}
+	def setMaterialsInRegion(region : VoxelRegion, mat : Material): Unit = {
+		setMaterialsInRegion(region, (x,y,z) => if (region.contains(x,y,z)) { mat } else { Material.Sentinel })
+	}
 	def setMaterialsInRegion(region : VoxelRegion, f : (Int,Int,Int) => Material): Unit = {
 		val shiftedMin = region.min >> Talea.dimensionPo2
 		val shiftedMax = region.max >> Talea.dimensionPo2
 
 		for (v <- shiftedMin to shiftedMax) {
 			val unsft = v << Talea.dimensionPo2
-			val talea = material.grid.getOrElseUpdate(unsft.x,unsft.y,unsft.z)
+			val talea = material.taleaAt(unsft.x,unsft.y,unsft.z)
 			for (x <- 0 until Talea.dimension optimized; y <- 0 until Talea.dimension optimized; z <- 0 until Talea.dimension optimized) {
 				talea(x,y,z) = materialMapping(f(unsft.x + x,unsft.y + y,unsft.z + z))
 			}

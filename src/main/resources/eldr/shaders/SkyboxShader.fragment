@@ -1,0 +1,12 @@
+#version 150 core
+
+in float untransformedZ;
+
+out vec4 o_FragColor;
+
+uniform vec3 lowColor;
+uniform vec3 highColor;
+
+void main (){
+	o_FragColor = vec4(mix( lowColor , highColor , clamp(untransformedZ * .00909,0.0,1.0) ),1.0);
+}

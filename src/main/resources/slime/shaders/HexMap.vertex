@@ -1,0 +1,20 @@
+#version 150 core
+
+in vec3 Vertex;
+in vec2 TexCoord;
+in vec4 Color;
+in float Edge;
+
+out vec4 colorV;
+out vec2 texCoordV;
+out float edgeV;
+
+uniform mat4 ProjectionMatrix;
+uniform mat4 ModelViewMatrix;
+
+void main (){
+    texCoordV = TexCoord;
+	colorV = Color;
+	edgeV = Edge;
+	gl_Position = ProjectionMatrix * ModelViewMatrix * vec4(Vertex,1.0);
+}

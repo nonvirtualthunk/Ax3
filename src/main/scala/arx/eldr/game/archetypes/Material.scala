@@ -14,7 +14,12 @@ import arx.core.representation.ConfigValue
 import arx.core.traits._
 import arx.core.units.UnitOfDensity
 import arx.core.units.UnitOfMeasure
-import arx.engine.entity.GameArchetype
+import arx.core.vec.ReadVec3i
+import arx.core.vec.Vec3i
+import arx.eldr.game.entity.data.CubeShape
+import arx.eldr.game.entity.data.PhysicalData
+import arx.engine.data.TGameEntityAuxData
+import arx.engine.entity._
 
 import scala.collection.mutable
 
@@ -53,7 +58,7 @@ import scala.collection.mutable
 // make a function on the game entity interface, leave it to implementors
 
 class Material(val baseName: String, val flags: Set[MaterialFlag] = Set())
-	extends GameArchetype(Material.nameFrom(baseName, flags), "Material") {
+	extends GameArchetype(Material.nameFrom(baseName, flags), Material) {
 	displayName = baseName
 	var density: UnitOfDensity = kg_m3
 	var fluidPassable = false
@@ -102,6 +107,24 @@ class Material(val baseName: String, val flags: Set[MaterialFlag] = Set())
 		} else {this}
 	}
 	def withoutFlags: Material = if (flags.isEmpty) {this} else {Material.materialVariantByFlags(this, Set())}
+
+	def createMaterialBlock (amount : Int = 1) = {
+		val ret = new MaterialBlock(this, amount)
+		ret[PhysicalData].shape = CubeShape(Vec3i.One)
+		ret[PhysicalData].staticObject = false
+		ret
+	}
+}
+
+class MaterialBlockData extends TGameEntityAuxData {
+	var material : Material = Material.Sentinel
+	var amount : Int = 1
+}
+
+class MaterialBlock(material : Material, amount : Int) extends MinimalGameEntity(TGameEntity.IdCounter.getAndIncrement) {
+	this.aux[MaterialBlockData].material = material
+	this.aux[MaterialBlockData].amount = amount
+	override def name: String = this.aux[MaterialBlockData].material.displayName
 }
 
 object ConfiguredMaterial {
@@ -131,7 +154,7 @@ object ConfiguredMaterial {
 	}
 }
 
-object Material {
+object Material extends TArchetypeKind {
 	val baseConfLocation: String = "eldr/entities/materials/Materials.conf"
 	GameArchetype.loadAllArchetypes(baseConfLocation, "materials", ConfiguredMaterial.createFrom)
 
@@ -158,7 +181,7 @@ object Material {
 	}
 
 	def materialWithName(name: String) = withName(name.toLowerCase)
-	def withName(name: String) = GameArchetype.archetype("Material", name).asInstanceOf[Material]
+	def withName(name: String) = GameArchetype.archetype(Material, name).asInstanceOf[Material]
 
 	def nameFrom(baseName:String, flags : Set[MaterialFlag]) = {
 		baseName + (if (flags.isEmpty) { "" } else { flags })
