@@ -28,7 +28,7 @@ class TerrainVisualizer(ge: GraphicsEngine) extends GraphicsComponent(ge) {
 	val vbo = new AVBO(HexAttributeProfile)
 	lazy val shader = ResourceManager.shader("slime/shaders/HexMap")
 
-	drawPriority = 10
+	drawOrder = 10
 
 	override def draw(): Unit = {
 		tb.bind()

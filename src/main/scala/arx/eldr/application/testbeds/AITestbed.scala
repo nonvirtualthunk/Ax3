@@ -20,6 +20,7 @@ import arx.eldr.graphics.entities.EntityGraphicsComponent
 import arx.eldr.graphics.environment.{SkyboxGraphicsComponent, TerrainGraphicsComponent}
 import arx.engine.advanced.Engine
 import arx.engine.entity.GameEntity
+import arx.engine.graphics.data.PovData
 import arx.graphics.pov.EyeCamera
 
 import scalaxy.loops._
@@ -34,7 +35,7 @@ object AITestbed extends Engine {
 		gameEngine.addComponent[LightComponent]
 		gameEngine.addComponent[AIGameComponent]
 
-		graphicsEngine.pov = {
+		graphicsEngine.graphicsWorld[PovData].pov = {
 			val cam = new EyeCamera(Vec3f(0,0,15),Vec3f.UnitX,Vec3f.UnitZ)
 			cam.moveSpeed = Vec3f(0.35f)
 			cam.turnSpeed = Vec2f(0.7f)

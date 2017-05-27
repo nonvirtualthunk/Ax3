@@ -22,6 +22,7 @@ import arx.engine.entity.TGameEntity
 import arx.engine.graphics.GraphicsEngine
 import arx.engine.graphics.components.CanvasGraphicsComponent
 import arx.engine.graphics.components.GraphicsComponent
+import arx.engine.graphics.data.PovData
 import arx.engine.simple.Canvas
 import arx.graphics.AVBO
 import arx.graphics.TextureBlock
@@ -34,7 +35,7 @@ import arx.slime.game.archetypes.creatures.SimpleSlime
 import arx.slime.game.core.HexCoord
 import arx.slime.game.data.PhysicalData
 import arx.slime.game.data.Terrain
-import arx.slime.game.testbed.control.SlimeControlMode
+//import arx.slime.game.testbed.control.SlimeControlMode
 import arx.slime.graphics.components.EntityVisualizer
 import arx.slime.graphics.components.TerrainVisualizer
 import arx.slime.graphics.core.HexAttributeProfile
@@ -48,12 +49,12 @@ object SlimeTestbed extends Engine {
 	override def setUpEngine(): Unit = {
 		val camera = new TopDownCamera(10.0f)
 		camera.proportionalMoveSpeed = true
-		graphicsEngine.pov = camera
+		graphicsEngine.graphicsWorld[PovData].pov = camera
 
 		graphicsEngine.addComponent[TerrainVisualizer]
 		graphicsEngine.addComponent[EntityVisualizer]
 
-		controlEngine.pushMode(new SlimeControlMode(controlEngine))
+//		controlEngine.pushMode(new SlimeControlMode(controlEngine))
 
 		val TD = world[Terrain]
 

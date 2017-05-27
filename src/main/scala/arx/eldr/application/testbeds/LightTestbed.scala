@@ -43,6 +43,7 @@ import scalaxy.loops._
 import arx.core.vec._
 import arx.eldr.graphics.entities.EntityGraphicsComponent
 import arx.engine.entity.GameEntity
+import arx.engine.graphics.data.PovData
 
 object LightTestbed extends Engine {
 
@@ -54,7 +55,7 @@ object LightTestbed extends Engine {
 		//	gameEngine.addComponent[ExperimentalLightGameComponent]
 		gameEngine.addComponent[LightComponent]
 
-		graphicsEngine.pov = {
+		graphicsEngine.graphicsWorld[PovData].pov = {
 			val cam = new EyeCamera(Vec3f(0,0,15),Vec3f.UnitX,Vec3f.UnitZ)
 			cam.moveSpeed = Vec3f(0.35f)
 			cam.turnSpeed = Vec2f(0.7f)

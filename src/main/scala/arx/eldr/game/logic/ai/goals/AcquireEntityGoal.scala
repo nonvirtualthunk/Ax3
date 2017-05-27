@@ -12,9 +12,10 @@ import arx.eldr.game.entity.data.InventoryData
 import arx.eldr.game.entity.data.PhysicalData
 import arx.eldr.game.logic.ai._
 import arx.eldr.game.logic.physics.PhysicalEntityGameComponent
-import arx.eldr.game.requirements.Requirement
 import arx.engine.entity.GameEntity
 import arx.engine.entity.TGameEntity
+import arx.engine.requirement.Requirement
+
 import scalaxy.loops._
 
 class AcquireEntityGoal(val requirement : Requirement) extends Goal {

@@ -8,10 +8,10 @@ import arx.core.datastructures.voxelregions.voxelregions.VoxelRegion
 import arx.core.traits.ArxEnum
 import arx.core.units.UnitOfTime
 import arx.core.vec.coordinates.VoxelCoord
-import arx.eldr.game.requirements.Requirement
 import arx.engine.entity.TGameEntity
 import arx.engine.world.World
 import arx.Prelude._
+import arx.engine.requirement.Requirement
 
 import scala.language.implicitConversions
 

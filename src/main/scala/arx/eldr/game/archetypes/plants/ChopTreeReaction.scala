@@ -8,6 +8,9 @@ import arx.eldr.game.archetypes.Reaction.OutputMap
 import arx.eldr.game.entity.data.ItemFlag
 import arx.eldr.game.requirements._
 import arx.engine.entity.TGameEntity
+import arx.engine.requirement.AuxDataDescriptor
+import arx.engine.requirement.EntityDescriptor
+import arx.engine.requirement.IndividualEntityDescriptor
 
 /**
   * TODO: Add javadoc

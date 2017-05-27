@@ -8,14 +8,14 @@ import arx.core.traits.ArxEnum
 import arx.core.traits.TSentinel
 import arx.core.traits.TSentinelable
 import arx.core.vec.coordinates.VoxelCoord
-import arx.eldr.game.requirements.AnyOneRequirement
-import arx.eldr.game.requirements.Requirement
 import arx.engine.entity.GameArchetype
 import arx.engine.entity.GameEntity
 import arx.engine.entity.TGameEntity
 import arx.Prelude._
 import arx.eldr.game.archetypes.Reaction.InputMap
 import arx.eldr.game.archetypes.Reaction.OutputMap
+import arx.engine.requirement.AnyOneRequirement
+import arx.engine.requirement.Requirement
 
 /**
  * TODO: Add javadoc

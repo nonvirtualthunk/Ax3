@@ -19,6 +19,7 @@ import arx.eldr.game.entity.data.{ItemFlag, PhysicalData}
 import arx.eldr.game.requirements._
 import arx.engine.data.TGameEntityAuxData
 import arx.engine.entity.{GameArchetype, GameEntity, TArchetypeKind, TGameEntity}
+import arx.engine.requirement.EntityDescriptor
 
 import scala.language.implicitConversions
 

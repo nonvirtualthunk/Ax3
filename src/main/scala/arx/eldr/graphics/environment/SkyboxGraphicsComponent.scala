@@ -35,7 +35,7 @@ class SkyboxGraphicsComponent(eng:GraphicsEngine) extends GraphicsComponent(eng)
 //	isActive = () => settingValue[Boolean]("Graphics/Advanced/Draw Skybox")
 //	override def initSettings = List(new BooleanSetting("Graphics/Advanced/Draw Skybox",true))
 
-	drawPriority = 1000
+	drawOrder = 1000
 
 	def draw() {
 		GL.glPushState(GL_BLEND,truth = false)
@@ -69,7 +69,7 @@ class SkyboxGraphicsComponent(eng:GraphicsEngine) extends GraphicsComponent(eng)
 		GL.glPopState(GL_BLEND)
 	}
 
-	def update(dt: UnitOfTime) {
+	protected override def update(dt: UnitOfTime) {
 		if ( radius != pov.viewDistance ) {
 			radius = pov.viewDistance
 			var vi = 0

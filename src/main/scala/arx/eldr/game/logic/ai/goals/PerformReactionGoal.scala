@@ -17,9 +17,9 @@ import arx.eldr.game.logic.ai.AIReason
 import arx.eldr.game.logic.ai.AIResult
 import arx.eldr.game.logic.ai.Goal
 import arx.eldr.game.logic.ai.SubGoalResult
-import arx.eldr.game.requirements.Requirement
-import arx.eldr.game.requirements.SpecificEntityDescriptor
 import arx.engine.entity.TGameEntity
+import arx.engine.requirement.Requirement
+import arx.engine.requirement.SpecificEntityDescriptor
 
 class PerformReactionGoal(val reaction: Reaction,
 								  val specifiedInputs: MultiMap[InputKind, TGameEntity],

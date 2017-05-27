@@ -2,12 +2,12 @@ package arx.eldr.game.archetypes.plants
 
 import arx.core.datastructures.MultiMap
 import arx.core.vec.coordinates.VoxelCoord
-import arx.eldr.game.archetypes._
 import arx.eldr.game.archetypes.Reaction.InputMap
 import arx.eldr.game.archetypes.Reaction.OutputMap
-import arx.eldr.game.requirements.AuxDataDescriptor
-import arx.eldr.game.requirements.EntityWithArchetypeDescriptor
+import arx.eldr.game.archetypes._
 import arx.engine.entity.TGameEntity
+import arx.engine.requirement.AuxDataDescriptor
+import arx.engine.requirement.EntityWithArchetypeDescriptor
 
 /**
   * TODO: Add javadoc
@@ -20,7 +20,7 @@ case class GatherSaplingReaction protected[archetypes](species: PlantSpecies) ex
 	val outKind = OutputKind.Material("sticks")
 	inputs = Map(target -> AuxDataDescriptor((PD: PlantData) => PD.ageCategory == AgeCategory.Tree.Sapling)
 		.and(EntityWithArchetypeDescriptor(species)))
-	outputs = Map(outKind -> ReactionOutput(species[TreeData].trunkMaterial,1))
+	outputs = Map(outKind -> ReactionOutput(species[TreeData].trunkMaterial, 1))
 	associatedSkills = List(Skill.PlantGathering)
 
 	override def react(inputs: InputMap, tools: InputMap, location: VoxelCoord, actors: List[TGameEntity]): OutputMap = {
