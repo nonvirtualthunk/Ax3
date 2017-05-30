@@ -9,6 +9,7 @@ import arx.application.Noto
 import arx.core.units.UnitOfTime
 import arx.core.vec.ReadVec3i
 import arx.core.vec.Vec3i
+import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.entity.TGameEntity
 import arx.engine.game.GameEngine
 import arx.engine.game.components.GameComponent
@@ -58,5 +59,34 @@ class RogVisionGameComponent(engine : GameEngine) extends GameComponent(engine) 
 
 	override protected def update(dt: UnitOfTime): Unit = {
 		recomputeVision(player, player[Creature])
+	}
+
+	def isVisibleTo(looker : TGameEntity, target : TGameEntity) = {
+		if (!looker.hasAuxData[Creature]) {
+			false
+		} else {
+			val range = looker[Creature].sightRange
+			val PD = looker[Physical]
+			val TPD = target[Physical]
+
+			if (PD.position.distanceTo(TPD.position) > range) {
+				false
+			} else {
+				val delta = TPD.position - PD.position
+				val mag = delta.lengthSafe
+				if (mag > 0.0f) {
+					val terrain = world[Terrain]
+
+					val deltaN = delta.normalize
+					val start = PD.position
+					(0.0f until mag by 0.25f).forall(f => {
+						val p = start + deltaN * f
+						terrain.voxel(p.x.toInt,p.y.toInt,p.z.toInt).material.opacity < 0.75f
+					})
+				} else {
+					true
+				}
+			}
+		}
 	}
 }

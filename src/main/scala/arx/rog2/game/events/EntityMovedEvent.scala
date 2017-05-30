@@ -1,0 +1,44 @@
+package arx.rog2.game.events
+
+/**
+  * TODO: Add javadoc
+  */
+
+import arx.core.vec.coordinates.VoxelCoord
+import arx.engine.control.event.Event.Event
+import arx.engine.entity.TGameEntity
+import arx.engine.event.GameEvent
+
+object Rog {
+	sealed trait RogLogLevel {
+		def ordinal : Int
+	}
+	case object Fine extends RogLogLevel {
+		override def ordinal = 1
+	}
+	case object Info extends RogLogLevel {
+		override def ordinal: Int = 2
+	}
+
+	case class LogMessage(text : String, references : List[Any], level : Rog.RogLogLevel)
+}
+
+abstract class RogGameEvent(entity : TGameEntity) extends GameEvent(entity) {
+	def logMessage : Rog.LogMessage
+}
+
+case class EntityMovedEvent (entity : TGameEntity, from : VoxelCoord, to : VoxelCoord) extends RogGameEvent(entity) {
+	override def logMessage = Rog.LogMessage("@0 moved from @1 to @2", entity :: from :: to :: Nil, Rog.Fine)
+}
+
+case class EntityAttackedEvent (entity : TGameEntity, target : TGameEntity, damageDealt : Int) extends RogGameEvent(entity) {
+	override def logMessage = Rog.LogMessage("@0 attacked @1 for @2 damage", entity :: target :: damageDealt :: Nil, Rog.Info)
+}
+
+case class EntityTookItemEvent (entity : TGameEntity, item : TGameEntity) extends RogGameEvent(entity) {
+	override def logMessage: Rog.LogMessage = Rog.LogMessage("@0 picked up @1", entity :: item :: Nil, Rog.Info)
+}
+
+case class EntityPlacedItemEvent (entity : TGameEntity, item : TGameEntity, location : VoxelCoord) extends RogGameEvent(entity) {
+	override def logMessage: Rog.LogMessage = Rog.LogMessage("@0 placed @1", entity :: item :: location :: Nil, Rog.Info)
+}

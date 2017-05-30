@@ -35,10 +35,7 @@ import arx.rog2.game.data.entity.TextureDrawInfo
 import arx.rog2.game.data.world.RogData
 import arx.rog2.game.data.world.Terrain
 import arx.rog2.game.data.world.TerrainFlag
-import arx.rog2.game.engine.RogLightingGameComponent
-import arx.rog2.game.engine.RogMainGameComponent
-import arx.rog2.game.engine.RogPhysicsGameComponent
-import arx.rog2.game.engine.RogVisionGameComponent
+import arx.rog2.game.engine._
 import arx.rog2.game.entities.Material
 import arx.rog2.graphics.EntityGraphicsComponent
 import arx.rog2.graphics.TerrainGraphicsComponent
@@ -237,6 +234,7 @@ object RogTestApplication extends Engine {
 		gameEngine.addComponent[RogPhysicsGameComponent]
 		gameEngine.addComponent[RogLightingGameComponent]
 		gameEngine.addComponent[RogVisionGameComponent]
+		gameEngine.addComponent[RogLogbookGameComponent]
 
 		graphicsEngine.addComponent[TerrainGraphicsComponent]
 		graphicsEngine.addComponent[EntityGraphicsComponent]
@@ -247,8 +245,10 @@ object RogTestApplication extends Engine {
 
 		gameEngine.eventBus.onEvent {
 			case AdvanceWorldEvent(dt) =>
-				gameEngine.updateSerial(dt.inSeconds)
-				world[TimeData].time += dt
+				synchronized {
+					gameEngine.updateSerial(dt.inSeconds)
+					world[TimeData].time += dt
+				}
 		}
 	}
 

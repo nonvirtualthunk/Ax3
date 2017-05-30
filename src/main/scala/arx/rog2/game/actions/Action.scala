@@ -10,8 +10,6 @@ import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.control.event.Event.Event
 import arx.engine.entity.TGameEntity
 import arx.engine.world.World
-import arx.rog2.game.EntityAttackedEvent
-import arx.rog2.game.EntityMovedEvent
 import arx.rog2.game.data.entity.Creature
 import arx.rog2.game.data.entity.Furniture
 import arx.rog2.game.data.entity.Inventory
@@ -19,8 +17,9 @@ import arx.rog2.game.data.entity.Physical
 import arx.rog2.game.data.world.Terrain
 import arx.rog2.game.data.world.Terrain.Modification
 import arx.rog2.game.entities.Material
+import arx.rog2.game.events.{EntityAttackedEvent, EntityMovedEvent, EntityPlacedItemEvent, EntityTookItemEvent}
 
-abstract class Action(entity: TGameEntity) {
+abstract class Action(val actor: TGameEntity) {
 	def isValid(world: World): Boolean
 
 	def timeRequired(world: World): UnitOfTime
@@ -80,18 +79,24 @@ case class InteractAction(entity: TGameEntity, target: TGameEntity) extends Acti
 	override def apply(world: World) = {
 		if (target.hasAuxData[Furniture]) {
 			if (target.hasAuxData[Inventory]) {
-				for (item <- target[Inventory].heldItems.headOption) {
-					entity[Inventory].hold(item)
+				target[Inventory].heldItems.headOption match {
+					case Some(item) =>
+						entity[Inventory].hold(item)
+						List(EntityTookItemEvent(entity, item))
+					case _ =>
+						Nil
 				}
+			} else {
+				Nil
 			}
 		} else {
 			entity[Inventory].hold(target)
+			List(EntityTookItemEvent(entity, target))
 		}
-		List()
 	}
 }
 
-case class PlaceItemAction(actor: TGameEntity, entity : TGameEntity, location : VoxelCoord) extends Action(entity) {
+case class PlaceItemAction(actorE: TGameEntity, entity : TGameEntity, location : VoxelCoord) extends Action(actorE) {
 	override def isValid(world: World): Boolean = actor[Inventory].heldItems.contains(entity)
 
 	override def timeRequired(world: World): UnitOfTime = 1.second
@@ -99,6 +104,14 @@ case class PlaceItemAction(actor: TGameEntity, entity : TGameEntity, location : 
 	override def apply(world: World): List[Event] = {
 		actor[Inventory].remove(entity)
 		entity[Physical].position = location
-		List(EntityMovedEvent(entity, VoxelCoord.Sentinel, location))
+		List(EntityPlacedItemEvent(actor, entity, location))
 	}
+}
+
+case class DoNothingAction(actorE : TGameEntity) extends Action(actorE) {
+	override def isValid(world: World): Boolean = true
+
+	override def timeRequired(world: World): UnitOfTime = 1.seconds
+
+	override def apply(world: World): List[Event] = Nil
 }

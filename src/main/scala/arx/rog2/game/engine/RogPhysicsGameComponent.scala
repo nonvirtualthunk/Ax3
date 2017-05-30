@@ -25,7 +25,7 @@ class RogPhysicsGameComponent(engine: GameEngine) extends GameComponent(engine) 
 
 
 	def entitiesAtLocation(v: VoxelCoord) = {
-		world[EntityOcclusionData].entities.get(v).filter(e => {
+		world[EntityOcclusionData].entities.get(v).distinct.filter(e => {
 			val PD = e[Physical]
 			val dimi = PD.dimensions.inVoxels.ceili
 			PD.heldIn.isEmpty &&

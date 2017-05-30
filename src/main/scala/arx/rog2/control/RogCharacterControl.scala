@@ -20,6 +20,7 @@ import arx.engine.control.components.windowing.widgets.data.DrawingData
 import arx.engine.control.data.WindowingData
 import arx.engine.control.event.Event.Event
 import arx.engine.control.event.Event.KeyPressEvent
+import arx.engine.entity.TGameEntity
 import arx.rog2.engine.RogComponent
 import arx.rog2.game.actions.Action
 import arx.rog2.game.actions.AttackAction
@@ -29,12 +30,15 @@ import arx.rog2.game.actions.PlaceItemAction
 import arx.rog2.game.data.entity.Creature
 import arx.rog2.game.data.entity.Inventory
 import arx.rog2.game.data.entity.Physical
-import arx.rog2.game.data.world.RogData
-import arx.rog2.game.data.world.Terrain
-import arx.rog2.game.engine.RogPhysicsGameComponent
+import arx.rog2.game.data.world.{Logbook, RogData, Terrain}
+import arx.rog2.game.engine.{RogCreatureGameComponent, RogPhysicsGameComponent}
+import arx.rog2.game.events.Rog
 import org.lwjgl.glfw.GLFW
 
-class RogCharacterControl(engine: ControlEngine, physics: RogPhysicsGameComponent) extends ControlComponent(engine) with RogComponent {
+class RogCharacterControl(engine: ControlEngine,
+								  physics: RogPhysicsGameComponent,
+								  creatureComp : RogCreatureGameComponent) extends ControlComponent(engine) with RogComponent
+{
 	dependencies ::= classOf[RogPhysicsGameComponent]
 	var lastMove = 0.seconds
 	val gapBetweenRepeat = 0.1.seconds
@@ -59,9 +63,28 @@ class RogCharacterControl(engine: ControlEngine, physics: RogPhysicsGameComponen
 		val text = new TextDisplayWidget(widg)
 		text.y = PositionExpression.Constant(0, BottomRight)
 		text.drawing.drawBackground = false
-		text.text = Moddable("Hello, world")
-		text.fontScale *= 1.0f
+		text.text = Moddable(() => world[Logbook].messages
+			.toStream
+			.filter(m => m.level.ordinal > Rog.Fine.ordinal)
+			.take(5)
+			.reverse
+			.map(msg => {
+				var tmp = msg.text
+				for ((ref,i) <- msg.references.zipWithIndex) {
+					tmp = tmp.replaceAllLiterally("@" + i, stringify(ref))
+				}
+				tmp
+			}).reduceLeftOption(_ + "\n" + _)
+			.getOrElse("")
+		)
+		text.fontScale *= 2.0f
 
+	}
+
+
+	def stringify(ref : Any) = ref match {
+		case ent : TGameEntity => ent.name
+		case o => o.toString
 	}
 
 
@@ -89,16 +112,16 @@ class RogCharacterControl(engine: ControlEngine, physics: RogPhysicsGameComponen
 						case Nil =>
 							val T = world[Terrain]
 							if (T.voxel(targetPos).isSentinel) {
-								executeAction(MoveAction(player, PD.position, targetPos))
+								creatureComp.executeAction(MoveAction(player, PD.position, targetPos))
 							} else if (T.voxel(targetPos.plusZ(1)).isSentinel) {
-								executeAction(MoveAction(player, PD.position, targetPos.plusZ(1)))
+								creatureComp.executeAction(MoveAction(player, PD.position, targetPos.plusZ(1)))
 							}
 						case entities =>
 							val intersectedEntity = entities.head
 							if (intersectedEntity.hasAuxData[Creature]) {
-								executeAction(AttackAction(player, intersectedEntity))
+								creatureComp.executeAction(AttackAction(player, intersectedEntity))
 							} else {
-								executeAction(InteractAction(player, intersectedEntity))
+								creatureComp.executeAction(InteractAction(player, intersectedEntity))
 							}
 					}
 				} else {
@@ -106,20 +129,12 @@ class RogCharacterControl(engine: ControlEngine, physics: RogPhysicsGameComponen
 						case GLFW.GLFW_KEY_P =>
 							for (heldItem <- player[Inventory].heldItems.headOption) {
 								val placePos = player[Physical].position + Cardinals.dirvec(player[Physical].facing)
-								executeAction(PlaceItemAction(player, heldItem, placePos))
+								creatureComp.executeAction(PlaceItemAction(player, heldItem, placePos))
 							}
 						case _ =>
 					}
 				}
 			}
-		}
-	}
-
-	def executeAction(action: Action): Unit = {
-		if (action.isValid(world)) {
-			val events = action.apply(world)
-			events.foreach(engine.gameEventBus.fireEvent)
-			engine.gameEventBus.fireEvent(AdvanceWorldEvent(action.timeRequired(world)))
 		}
 	}
 }
