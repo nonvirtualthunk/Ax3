@@ -12,15 +12,17 @@ import arx.core.vec.Vec3i
 import arx.engine.control.ControlEngine
 import arx.engine.control.components.ControlComponent
 import arx.engine.control.components.windowing.Widget
-import arx.engine.control.components.windowing.widgets.BottomRight
-import arx.engine.control.components.windowing.widgets.DimensionExpression
-import arx.engine.control.components.windowing.widgets.PositionExpression
-import arx.engine.control.components.windowing.widgets.TextDisplayWidget
+import arx.engine.control.components.windowing.widgets.DimensionExpression.Intrinsic
+import arx.engine.control.components.windowing.widgets.ImageDisplayWidget.ActualSize
+import arx.engine.control.components.windowing.widgets.PositionExpression.Constant
+import arx.engine.control.components.windowing.widgets._
 import arx.engine.control.components.windowing.widgets.data.DrawingData
 import arx.engine.control.data.WindowingData
 import arx.engine.control.event.Event.Event
 import arx.engine.control.event.Event.KeyPressEvent
-import arx.engine.entity.TGameEntity
+import arx.engine.entity.{GameEntity, TGameEntity}
+import arx.graphics.helpers.Color
+import arx.rog2.control.modes.{ControlMode, InventoryMode, MainMode}
 import arx.rog2.engine.RogComponent
 import arx.rog2.game.actions.Action
 import arx.rog2.game.actions.AttackAction
@@ -34,14 +36,16 @@ import arx.rog2.game.data.world.{Logbook, RogData, Terrain}
 import arx.rog2.game.engine.{RogCreatureGameComponent, RogPhysicsGameComponent}
 import arx.rog2.game.events.Rog
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFW._
 
 class RogCharacterControl(engine: ControlEngine,
-								  physics: RogPhysicsGameComponent,
-								  creatureComp : RogCreatureGameComponent) extends ControlComponent(engine) with RogComponent
+								  val physics: RogPhysicsGameComponent,
+								  val creatureComp : RogCreatureGameComponent) extends ControlComponent(engine) with RogComponent
 {
 	dependencies ::= classOf[RogPhysicsGameComponent]
-	var lastMove = 0.seconds
-	val gapBetweenRepeat = 0.1.seconds
+
+	var modeStack = List[ControlMode]()
+	pushMode(new MainMode)
 
 
 	override protected def initialize(): Unit = {
@@ -77,7 +81,43 @@ class RogCharacterControl(engine: ControlEngine,
 			}).reduceLeftOption(_ + "\n" + _)
 			.getOrElse("")
 		)
-		text.fontScale *= 2.0f
+		text.fontScale = 2.0f
+
+
+		val statusDisplay = {
+			val w = new Widget(desktop)
+			w.x = PositionExpression.Constant(0, TopRight)
+			w.y = PositionExpression.Constant(0, TopRight)
+			w.width = DimensionExpression.Constant(250)
+			w.height = DimensionExpression.Constant(250)
+			w.drawing.backgroundImage = Some("ui/minimalistBorderWhite_ne.png")
+			w.drawing.backgroundColor = Color(200,200,200,255)
+
+			case class Stat(name : String, curFunc : (Creature) => Int, maxFunc : (Creature) => Int)
+			val stats = Stat("food",c => c.food, c => c.maxFood) :: Stat("health", c => c.hp, c => c.maxHP) :: Stat("sanity", c => c.sanity, c => c.maxSanity) :: Nil
+			val displays = stats.map(s => {
+				val iconDisp = new ImageDisplayWidget(w)
+				iconDisp.image = Moddable(s"rog/ui/icons/${s.name}Icon.png")
+				iconDisp.scalingStyle = ActualSize(2)
+				iconDisp.x = Constant(5)
+				iconDisp.drawing.drawBackground = false
+
+				val textDisp = new TextDisplayWidget(w)
+				textDisp.x = PositionExpression.Relative(iconDisp, 10)
+				textDisp.y = PositionExpression.Relative(iconDisp, 0, Cardinals.Center)
+
+				textDisp.text = Moddable(() => s"${s.curFunc(player[Creature])} / ${s.maxFunc(player[Creature])}")
+				textDisp.drawing.drawBackground = false
+				textDisp.fontScale = 2.0f
+
+				iconDisp
+			})
+
+			displays.head.y = PositionExpression.Constant(15)
+			displays.sliding(2).foreach(pair => pair.last.y = PositionExpression.Relative(pair.head,10,Cardinals.Down))
+
+			w
+		}
 
 	}
 
@@ -88,54 +128,29 @@ class RogCharacterControl(engine: ControlEngine,
 	}
 
 
-	controlEvents.onEvent {
-		case KeyPressEvent(key, modifiers, repeat) => {
-			if (!repeat || (curTime() - lastMove) > gapBetweenRepeat) {
-				lastMove = curTime()
-				val movement = key match {
-					case GLFW.GLFW_KEY_W => Vec3i(0, 1, 0)
-					case GLFW.GLFW_KEY_S => Vec3i(0, -1, 0)
-					case GLFW.GLFW_KEY_A => Vec3i(-1, 0, 0)
-					case GLFW.GLFW_KEY_D => Vec3i(1, 0, 0)
-					case GLFW.GLFW_KEY_Q => Vec3i(-1, 1, 0)
-					case GLFW.GLFW_KEY_E => Vec3i(1, 1, 0)
-					case GLFW.GLFW_KEY_C => Vec3i(1, -1, 0)
-					case GLFW.GLFW_KEY_Z => Vec3i(-1, -1, 0)
-					case _ => Vec3i.Zero
-				}
-
-				if (movement != Vec3i.Zero) {
-					val PD = world[RogData].player[Physical]
-					val targetPos = PD.position + movement
-
-					physics.entitiesAtLocation(targetPos).filter(e => e[Physical].solid) match {
-						case Nil =>
-							val T = world[Terrain]
-							if (T.voxel(targetPos).isSentinel) {
-								creatureComp.executeAction(MoveAction(player, PD.position, targetPos))
-							} else if (T.voxel(targetPos.plusZ(1)).isSentinel) {
-								creatureComp.executeAction(MoveAction(player, PD.position, targetPos.plusZ(1)))
-							}
-						case entities =>
-							val intersectedEntity = entities.head
-							if (intersectedEntity.hasAuxData[Creature]) {
-								creatureComp.executeAction(AttackAction(player, intersectedEntity))
-							} else {
-								creatureComp.executeAction(InteractAction(player, intersectedEntity))
-							}
-					}
-				} else {
-					key match {
-						case GLFW.GLFW_KEY_P =>
-							for (heldItem <- player[Inventory].heldItems.headOption) {
-								val placePos = player[Physical].position + Cardinals.dirvec(player[Physical].facing)
-								creatureComp.executeAction(PlaceItemAction(player, heldItem, placePos))
-							}
-						case _ =>
-					}
-				}
-			}
+	def popMode(): Unit = {
+		if (modeStack.size > 1) {
+			modeStack.head.close()
+			modeStack = modeStack.tail
 		}
+	}
+
+	def pushMode(mode : ControlMode): Unit = {
+		mode.characterControl = this
+		mode.initialize()
+		modeStack ::= mode
+	}
+
+	controlEvents.onEvent {
+		case KeyPressEvent(key,_,_) if key == GLFW_KEY_ESCAPE =>
+			popMode()
+		case kpe: KeyPressEvent=>
+			var consumed = false
+			var toCheck = modeStack
+			while (toCheck.nonEmpty && !consumed) {
+				consumed = toCheck.head.handleEvent(kpe)
+				toCheck = toCheck.tail
+			}
 	}
 }
 

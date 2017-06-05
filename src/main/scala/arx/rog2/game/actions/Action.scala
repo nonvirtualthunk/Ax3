@@ -10,14 +10,11 @@ import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.control.event.Event.Event
 import arx.engine.entity.TGameEntity
 import arx.engine.world.World
-import arx.rog2.game.data.entity.Creature
-import arx.rog2.game.data.entity.Furniture
-import arx.rog2.game.data.entity.Inventory
-import arx.rog2.game.data.entity.Physical
+import arx.rog2.game.data.entity._
 import arx.rog2.game.data.world.Terrain
 import arx.rog2.game.data.world.Terrain.Modification
 import arx.rog2.game.entities.Material
-import arx.rog2.game.events.{EntityAttackedEvent, EntityMovedEvent, EntityPlacedItemEvent, EntityTookItemEvent}
+import arx.rog2.game.events._
 
 abstract class Action(val actor: TGameEntity) {
 	def isValid(world: World): Boolean
@@ -105,6 +102,20 @@ case class PlaceItemAction(actorE: TGameEntity, entity : TGameEntity, location :
 		actor[Inventory].remove(entity)
 		entity[Physical].position = location
 		List(EntityPlacedItemEvent(actor, entity, location))
+	}
+}
+
+case class EquipItemAction(actorE : TGameEntity, entity : TGameEntity, toSlot : BodySlot) extends Action(actorE) {
+	override def isValid(world: World): Boolean = actorE.auxDataOpt[Equipper] match {
+		case Some(equipper) => equipper.slots.contains(toSlot) && !equipper.equippedEntities.contains(toSlot)
+		case None => false
+	}
+
+	override def timeRequired(world: World): UnitOfTime = 1.second
+
+	override def apply(world: World): List[Event] = {
+		actor[Equipper].equip(entity, toSlot)
+		List(EntityEquippedItemEvent(actor, entity, toSlot))
 	}
 }
 

@@ -6,39 +6,30 @@ package arx.rog2.game.application
 
 import arx.Prelude._
 import arx.ai.goap.GOAPSandbox.PhysicalData
-import arx.core.vec.Cardinals
-import arx.core.vec.ReadVec2i
-import arx.core.vec.Vec2i
-import arx.core.vec.Vec3i
+import arx.core.datastructures.voxelregions.voxelregions.VoxelRegion
+import arx.core.vec._
 import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.EngineCore
 import arx.engine.advanced.Engine
 import arx.engine.control.components.windowing.WindowingControlComponent
 import arx.engine.data.TimeData
 import arx.engine.entity.GameEntity
-import arx.engine.graphics.components.WindowingGraphicsComponent
+import arx.engine.graphics.components.windowing.WindowingGraphicsComponent
 import arx.engine.graphics.data.PovData
-import arx.graphics.helpers.Color
+import arx.graphics.helpers.{Color, HSBA}
 import arx.graphics.pov.TopDownCamera
 import arx.rog2.control.AdvanceWorldEvent
 import arx.rog2.control.RogCharacterControl
-import arx.rog2.game.data.entity.Creature
-import arx.rog2.game.data.entity.CubeDrawInfo
-import arx.rog2.game.data.entity.DrawHeight
-import arx.rog2.game.data.entity.Furniture
-import arx.rog2.game.data.entity.Inventory
-import arx.rog2.game.data.entity.LightSource
-import arx.rog2.game.data.entity.ObjectFlag
-import arx.rog2.game.data.entity.Physical
-import arx.rog2.game.data.entity.SliceDrawInfo
-import arx.rog2.game.data.entity.TextureDrawInfo
+import arx.rog2.game.data.entity.BodySlotQualifier.{Left, Right}
+import arx.rog2.game.data.entity.BodySlotType.{Hand, Head, Leg, Torso}
+import arx.rog2.game.data.entity._
 import arx.rog2.game.data.world.RogData
 import arx.rog2.game.data.world.Terrain
 import arx.rog2.game.data.world.TerrainFlag
 import arx.rog2.game.engine._
-import arx.rog2.game.entities.Material
-import arx.rog2.graphics.EntityGraphicsComponent
-import arx.rog2.graphics.TerrainGraphicsComponent
+import arx.rog2.game.entities.{Material, Weapons}
+import arx.rog2.graphics.data.{Overlay, OverlayRegion}
+import arx.rog2.graphics.{EntityGraphicsComponent, OverlayGraphicsComponent, TerrainGraphicsComponent}
 
 import scalaxy.loops._
 
@@ -154,19 +145,7 @@ object RogTestApplication extends Engine {
 				})
 
 				world.addEntities({
-					val torch = new GameEntity("Torch")
-					torch[Physical].withData { o =>
-						o.position = VC(0,0,0)
-						o.dimensions = 1.voxel x 1.voxel x 1.5.voxels
-						o.drawInfo = SliceDrawInfo("standing_torch")
-						o.drawOrder = -1
-						o.effectiveOpacity = 0.0f
-					}
-					torch[LightSource].withData { o =>
-						o.lightStrength = 15.voxels
-						o.lightBrightness = 0.75f
-						o.lightColor = Color(255, 235, 190)
-					}
+					val shortSword = Weapons.shortSword
 
 					val crate = new GameEntity("Crate")
 					crate[Physical].withData { o =>
@@ -182,10 +161,10 @@ object RogTestApplication extends Engine {
 					}
 
 					crate[Inventory].withData { o =>
-						o.hold(torch)
+						o.hold(shortSword)
 					}
 
-					crate :: torch :: Nil
+					crate :: shortSword :: Nil
 				})
 
 				for (dx <- 0 to 1; dy <- 0 to 1; dz <- 0 to 2) {
@@ -213,6 +192,14 @@ object RogTestApplication extends Engine {
 		ent[Physical].dimensions = 1.voxel x 1.voxel x 2.voxels
 		ent[Physical].drawInfo = TextureDrawInfo("player")
 		ent[Creature].sightRange = 20.voxels
+		ent[Equipper].withData(d => {
+			d.slots += BodySlot(Hand, Left)
+			d.slots += BodySlot(Hand, Right)
+			d.slots += BodySlot(Head)
+			d.slots += BodySlot(Torso)
+			d.slots += BodySlot(Leg, Left)
+			d.slots += BodySlot(Leg, Right)
+		})
 
 		world.addEntities(ent)
 		world[RogData].player = ent
@@ -230,6 +217,12 @@ object RogTestApplication extends Engine {
 		pov.fovy = 70.0f
 		graphicsWorld[PovData].pov = pov
 
+		graphicsWorld[Overlay].overlaidRegions += "test" ->
+			OverlayRegion(
+				VoxelRegion(VoxelCoord.Center.plusZ(1)),
+				"rog/ui/overlay/targetNegativeSolid.png",
+				HSBA.White)
+
 		gameEngine.addComponent[RogMainGameComponent]
 		gameEngine.addComponent[RogPhysicsGameComponent]
 		gameEngine.addComponent[RogLightingGameComponent]
@@ -239,6 +232,7 @@ object RogTestApplication extends Engine {
 		graphicsEngine.addComponent[TerrainGraphicsComponent]
 		graphicsEngine.addComponent[EntityGraphicsComponent]
 		graphicsEngine.addComponent[WindowingGraphicsComponent]
+		graphicsEngine.addComponent[OverlayGraphicsComponent]
 
 		controlEngine.addComponent[RogCharacterControl]
 		controlEngine.addComponent[WindowingControlComponent]

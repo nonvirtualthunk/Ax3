@@ -22,6 +22,7 @@ import arx.graphics.AVBO
 import arx.graphics.AttributeProfile
 import arx.graphics.Texture
 import arx.graphics.TextureBlock
+import arx.graphics.helpers.HSBA
 import arx.resource.ResourceManager
 import arx.rog2.engine.RogComponent
 import arx.rog2.game.data.entity.Creature
@@ -201,6 +202,15 @@ class RogQuadBuilder(vbo: AVBO, textureBlock: TextureBlock, blankTC: Array[ReadV
 	var lr = 1.0f
 	var lg = 1.0f
 	var lb = 1.0f
+
+
+	override def withColor(hsba: ReadVec4f): RogQuadBuilder.this.type = {
+		if (! hsba.isInstanceOf[HSBA]) {
+			throw new UnsupportedOperationException("only use hsba colors")
+		} else {
+			super.withColor(hsba)
+		}
+	}
 
 	def withVisionPcnt(v: Float) = {
 		visionPcnt = v

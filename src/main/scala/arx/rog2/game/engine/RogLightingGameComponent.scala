@@ -61,7 +61,7 @@ class RogLightingGameComponent(engine : GameEngine) extends GameComponent(engine
 
 	var lastPlayerPos = VC(0,0,0)
 
-	override protected def update(dt: UnitOfTime): Unit = {
+	override protected def updateSelf(dt: UnitOfTime): Unit = {
 		// two reasons we want to update,
 		// 1) the world was modified within the range of the light and
 		// 2) the light moved from being out of sight range to being in sight range

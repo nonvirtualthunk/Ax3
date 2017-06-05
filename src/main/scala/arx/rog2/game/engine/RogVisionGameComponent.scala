@@ -57,7 +57,7 @@ class RogVisionGameComponent(engine : GameEngine) extends GameComponent(engine) 
 		Noto.info("Updating vision")
 	}
 
-	override protected def update(dt: UnitOfTime): Unit = {
+	override protected def updateSelf(dt: UnitOfTime): Unit = {
 		recomputeVision(player, player[Creature])
 	}
 

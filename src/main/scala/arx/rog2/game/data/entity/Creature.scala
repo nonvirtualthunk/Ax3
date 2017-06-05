@@ -19,8 +19,9 @@ class Creature extends TGameEntityAuxData {
 	var damageTaken = 0
 	def hp = maxHP - damageTaken
 
-	var maxFood = 10
+	var maxFood = 50
 	var hunger = 0.0f
+	var metabolism = 0.025f // per second
 	def food = maxFood - hunger.toInt
 
 	var maxSanity = 10

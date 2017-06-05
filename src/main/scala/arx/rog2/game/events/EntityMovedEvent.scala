@@ -8,6 +8,7 @@ import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.control.event.Event.Event
 import arx.engine.entity.TGameEntity
 import arx.engine.event.GameEvent
+import arx.rog2.game.data.entity.BodySlot
 
 object Rog {
 	sealed trait RogLogLevel {
@@ -41,4 +42,8 @@ case class EntityTookItemEvent (entity : TGameEntity, item : TGameEntity) extend
 
 case class EntityPlacedItemEvent (entity : TGameEntity, item : TGameEntity, location : VoxelCoord) extends RogGameEvent(entity) {
 	override def logMessage: Rog.LogMessage = Rog.LogMessage("@0 placed @1", entity :: item :: location :: Nil, Rog.Info)
+}
+
+case class EntityEquippedItemEvent (entity : TGameEntity, item : TGameEntity, toSlot : BodySlot) extends RogGameEvent(entity) {
+	override def logMessage: Rog.LogMessage = Rog.LogMessage("@0 equipped @1 to @3", entity :: item :: toSlot :: Nil, Rog.Info)
 }

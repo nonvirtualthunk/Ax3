@@ -35,7 +35,7 @@ class RogMainGameComponent(engine: GameEngine) extends GameComponent(engine) {
 		world[TimeData].pause()
 	}
 
-	override protected def update(dt: UnitOfTime): Unit = {
+	override protected def updateSelf(dt: UnitOfTime): Unit = {
 
 	}
 

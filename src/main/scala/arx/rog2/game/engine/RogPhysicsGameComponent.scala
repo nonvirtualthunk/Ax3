@@ -14,7 +14,7 @@ import arx.rog2.game.data.world.EntityOcclusionData
 import arx.rog2.game.data.world.Terrain
 
 class RogPhysicsGameComponent(engine: GameEngine) extends GameComponent(engine) with RogComponent {
-	override protected def update(dt: UnitOfTime): Unit = {
+	override protected def updateSelf(dt: UnitOfTime): Unit = {
 		val TD = world[Terrain]
 		for (ent <- entitiesWithAuxData[Physical]) {
 			if (TD.voxel(ent.position.minusZ(1)).isSentinel) {

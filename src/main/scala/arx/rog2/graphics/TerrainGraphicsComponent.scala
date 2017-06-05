@@ -73,7 +73,7 @@ class TerrainGraphicsComponent(engine: GraphicsEngine) extends RogGraphicsCompon
 
 							maxSight = maxSight.max(visionPcnt)
 
-							val color = mat.color * HSBA(1.0f,Prelude.sqrtf(lightPcnt),sideMult * lightPcnt,1.0f)
+							val color : HSBA = mat.color * HSBA(1.0f,Prelude.sqrtf(lightPcnt),sideMult * lightPcnt,1.0f)
 
 							// standard side-of-voxel display
 							canvas.quad(rv)

@@ -26,6 +26,7 @@ class Material(nomen : String) extends GameArchetype(nomen, Material) {
 object Material extends TArchetypeKind {
 	val Sentinel = new Material("Sentinel") with TSentinel {
 		opacity = 0.0f
+		solid = false
 	}
 
 
