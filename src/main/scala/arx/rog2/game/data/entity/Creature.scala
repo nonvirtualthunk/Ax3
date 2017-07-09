@@ -28,7 +28,7 @@ class Creature extends TGameEntityAuxData {
 	var sanityLost = 0
 	def sanity = maxSanity - sanityLost
 
-	var damageDealt = 3
+	var naturalWeaponDamage = 3
 
 	var sightRange = 30.voxels
 

@@ -208,7 +208,8 @@ object RogTestApplication extends Engine {
 			val enemy = new GameEntity("Enemy")
 			enemy[Physical].position = VCR(0, 5, 1)
 			enemy[Physical].drawInfo = TextureDrawInfo("enemy1")
-			enemy[Creature].damageDealt = 1
+			enemy[Creature].naturalWeaponDamage = 1
+			enemy[Equipper]
 			enemy
 		})
 

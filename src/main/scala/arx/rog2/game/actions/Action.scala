@@ -5,10 +5,11 @@ package arx.rog2.game.actions
   */
 
 import arx.Prelude._
+import arx.application.Noto
 import arx.core.units.UnitOfTime
 import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.control.event.Event.Event
-import arx.engine.entity.TGameEntity
+import arx.engine.entity.{GameEntity, TGameEntity}
 import arx.engine.world.World
 import arx.rog2.game.data.entity._
 import arx.rog2.game.data.world.Terrain
@@ -52,18 +53,49 @@ case class MoveAction(entity: TGameEntity, from: VoxelCoord, to: VoxelCoord) ext
 	}
 }
 
+case class DamageDone(dice : List[DieRoll], bonus : Int)
+
 case class AttackAction(entity: TGameEntity, target: TGameEntity) extends Action(entity) {
 	override def isValid(world: World): Boolean = target[Creature].hp > 0 && world.containsEntity(target)
 
 	override def timeRequired(world: World): UnitOfTime = 1.second
 
 	override def apply(world: World) = {
-		val dmg = entity[Creature].damageDealt
-		target[Creature].damageTaken += dmg
-		if (target[Creature].damageTaken >= target[Creature].maxHP) {
-			world.removeEntity(target)
+		entity.auxDataOpt[Equipper] match {
+			case Some(equipper) =>
+				val wpn = equipper.equippedEntities.find { case (slot,ent) => ent.hasAuxData[Weapon] } match {
+					case Some((_,w)) =>
+						w
+					case None =>
+						val weapon = new GameEntity("Natural Weapon")
+						weapon[Weapon].withData { d =>
+							d.damageDice = MM(1)
+							d.damagePerDie = MM(entity[Creature].naturalWeaponDamage)
+						}
+						weapon
+				}
+
+				val dmgPerDie = wpn[Weapon].damagePerDie.resolve().toInt
+				val numDamageDice = wpn[Weapon].damageDice.resolve().toInt
+				val dmgBonus = wpn[Weapon].damageBonus.resolve().toInt
+
+				var results = List[DieRoll]()
+				var dmg = 0.0f
+				for (i <- 0 until numDamageDice) {
+					val dieRoll = 1 + rand(0,dmgPerDie)
+					dmg += dieRoll
+					results ::= DieRoll(dieRoll, dmgPerDie)
+				}
+				dmg *= wpn[Weapon].damageMultiplier
+				dmg += dmgBonus
+
+				target[Creature].damageTaken += dmg.toInt
+				if (target[Creature].damageTaken >= target[Creature].maxHP) {
+					world.removeEntity(target)
+				}
+				List(EntityAttackedEvent(entity, target, DamageDone(results, dmgBonus)))
+			case None => List(ErrorEvent(entity, "Entity was not an equipper, can't compute damage"))
 		}
-		List(EntityAttackedEvent(entity, target, dmg))
 	}
 }
 

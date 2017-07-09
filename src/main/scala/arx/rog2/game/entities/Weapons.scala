@@ -27,7 +27,7 @@ object Weapons {
 			w.attackDuration = 0.9f
 			w.range = 1
 
-			w.damageDice = 1
+			w.damageDice = 2
 			w.damagePerDie = 6
 			w.damageMultiplier = 1.0f
 			w.damageBonus = 1

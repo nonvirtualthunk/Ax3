@@ -31,3 +31,5 @@ class Item extends TGameEntityAuxData {
 
 	def durabilityRemaining = maxDurability - durabilityUsed
 }
+
+case class DieRoll(dieResult : Int, dieSize : Int)

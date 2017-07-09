@@ -8,6 +8,7 @@ import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.control.event.Event.Event
 import arx.engine.entity.TGameEntity
 import arx.engine.event.GameEvent
+import arx.rog2.game.actions.DamageDone
 import arx.rog2.game.data.entity.BodySlot
 
 object Rog {
@@ -20,6 +21,9 @@ object Rog {
 	case object Info extends RogLogLevel {
 		override def ordinal: Int = 2
 	}
+	case object Error extends RogLogLevel {
+		override def ordinal: Int = 4
+	}
 
 	case class LogMessage(text : String, references : List[Any], level : Rog.RogLogLevel)
 }
@@ -28,11 +32,15 @@ abstract class RogGameEvent(entity : TGameEntity) extends GameEvent(entity) {
 	def logMessage : Rog.LogMessage
 }
 
+case class ErrorEvent(entity : TGameEntity, error : String) extends RogGameEvent(entity) {
+	override def logMessage: Rog.LogMessage = Rog.LogMessage("error encountered: " + error,Nil,Rog.Error)
+}
+
 case class EntityMovedEvent (entity : TGameEntity, from : VoxelCoord, to : VoxelCoord) extends RogGameEvent(entity) {
 	override def logMessage = Rog.LogMessage("@0 moved from @1 to @2", entity :: from :: to :: Nil, Rog.Fine)
 }
 
-case class EntityAttackedEvent (entity : TGameEntity, target : TGameEntity, damageDealt : Int) extends RogGameEvent(entity) {
+case class EntityAttackedEvent (entity : TGameEntity, target : TGameEntity, damageDealt : DamageDone) extends RogGameEvent(entity) {
 	override def logMessage = Rog.LogMessage("@0 attacked @1 for @2 damage", entity :: target :: damageDealt :: Nil, Rog.Info)
 }
 
@@ -45,5 +53,5 @@ case class EntityPlacedItemEvent (entity : TGameEntity, item : TGameEntity, loca
 }
 
 case class EntityEquippedItemEvent (entity : TGameEntity, item : TGameEntity, toSlot : BodySlot) extends RogGameEvent(entity) {
-	override def logMessage: Rog.LogMessage = Rog.LogMessage("@0 equipped @1 to @3", entity :: item :: toSlot :: Nil, Rog.Info)
+	override def logMessage: Rog.LogMessage = Rog.LogMessage("@0 equipped @1 to @2", entity :: item :: toSlot :: Nil, Rog.Info)
 }

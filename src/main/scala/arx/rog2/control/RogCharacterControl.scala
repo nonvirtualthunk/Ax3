@@ -21,8 +21,9 @@ import arx.engine.control.data.WindowingData
 import arx.engine.control.event.Event.Event
 import arx.engine.control.event.Event.KeyPressEvent
 import arx.engine.entity.{GameEntity, TGameEntity}
-import arx.graphics.helpers.Color
+import arx.graphics.helpers.{Color, RichText}
 import arx.rog2.control.modes.{ControlMode, InventoryMode, MainMode}
+import arx.rog2.control.widgets.LogbookWidget
 import arx.rog2.engine.RogComponent
 import arx.rog2.game.actions.Action
 import arx.rog2.game.actions.AttackAction
@@ -64,24 +65,35 @@ class RogCharacterControl(engine: ControlEngine,
 			o.backgroundImage = Some("ui/minimalistBorder_ne.png")
 		}
 
-		val text = new TextDisplayWidget(widg)
-		text.y = PositionExpression.Constant(0, BottomRight)
-		text.drawing.drawBackground = false
-		text.text = Moddable(() => world[Logbook].messages
-			.toStream
-			.filter(m => m.level.ordinal > Rog.Fine.ordinal)
-			.take(5)
-			.reverse
-			.map(msg => {
-				var tmp = msg.text
-				for ((ref,i) <- msg.references.zipWithIndex) {
-					tmp = tmp.replaceAllLiterally("@" + i, stringify(ref))
-				}
-				tmp
-			}).reduceLeftOption(_ + "\n" + _)
-			.getOrElse("")
-		)
-		text.fontScale = 2.0f
+		val text = new LogbookWidget(widg, world)
+//		val text = new TextDisplayWidget(widg)
+//		text.y = PositionExpression.Constant(0, BottomRight)
+//		text.drawing.drawBackground = false
+//		text.text = Moddable(() => world[Logbook].messages
+//			.toStream
+//			.filter(m => m.level.ordinal > Rog.Fine.ordinal)
+//			.take(5)
+//			.reverse
+//			.map(msg => {
+//				var tmp = msg.text
+//				var i = 0
+//				var activeStr = ""
+//				while (i < tmp.length) {
+//
+//
+//					i += 1
+//				}
+//
+//				for ((ref,i) <- msg.references.zipWithIndex) {
+//					tmp = tmp.replaceAllLiterally("@" + i, stringify(ref))
+//				}
+//				tmp
+//				RichText.Empty
+//			})
+////			}).reduceLeftOption(_ + "\n" + _)
+////			.getOrElse(RichText.Empty)
+//		)
+//		text.fontScale = 2.0f
 
 
 		val statusDisplay = {

@@ -16,7 +16,7 @@ import arx.core.vec._
 import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.control.components.windowing.Widget
 import arx.engine.control.components.windowing.widgets.{DimensionExpression, DynamicWidget, PositionExpression, TextDisplayWidget}
-import arx.engine.control.event.Event.KeyPressEvent
+import arx.engine.control.event.Event.{KeyPressEvent, MousePressEvent}
 import arx.engine.entity.TGameEntity
 import arx.engine.graphics.data.GraphicsWorld
 import arx.graphics.helpers.HSBA
@@ -32,7 +32,9 @@ class InventoryMode(desktop: Widget, player : TGameEntity) extends ControlMode {
 
 	override def initialize(): Unit = {
 		invW = new DynamicWidget[List[TGameEntity]](desktop) {
-			override def currentContent: List[TGameEntity] = player[Inventory].heldItems
+			override def currentContent: List[TGameEntity] =
+				player[Inventory].heldItems
+					.filter(e => e.auxDataOpt[Equippable].forall(e => e.equippedOn.isEmpty))
 			override def generateWidgets(items: List[TGameEntity]): List[Widget] = {
 				items.zipWithIndex.map{ case (item,index) => {
 					val itemW = new TextDisplayWidget(this)
@@ -96,6 +98,38 @@ class InventoryMode(desktop: Widget, player : TGameEntity) extends ControlMode {
 										characterControl.popMode()
 									}))
 								})
+							}
+
+
+							if (possibilities.size == 1) {
+								possibilities.head._2.apply()
+							} else{
+								val selW = new Widget(invW)
+								selW.x = PositionExpression.Centered
+								selW.y = PositionExpression.Centered
+								selW.width = DimensionExpression.Constant(300)
+								selW.height = DimensionExpression.Constant(150 * possibilities.size)
+
+
+
+								val oneOver = 1.0f / possibilities.size
+								for (((key,func),i) <- possibilities.zipWithIndex) {
+									val button = new TextDisplayWidget(selW)
+									button.x = PositionExpression.Centered
+									button.y = PositionExpression.Proportional(oneOver * (i.toFloat + 0.5f))
+
+									button.text = Moddable(key)
+									button.onEvent {
+										case MousePressEvent(_,_,_) =>
+											selW.close()
+											func()
+										case kpe :KeyPressEvent =>
+											if (kpe.asciiChar == key.toLowerCase()(1)) {
+												selW.close()
+												func()
+											}
+									}
+								}
 							}
 						}
 					case None =>
