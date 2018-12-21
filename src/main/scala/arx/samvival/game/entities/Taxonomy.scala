@@ -13,25 +13,8 @@ import arx.core.macros.GenerateCompanion
 import scalaxy.loops._
 import arx.core.vec._
 import arx.engine.data.TAuxData
+import arx.engine.entity.Taxon
 
-
-
-case class Taxon(name : String, parents : List[Taxon]) {
-	def isA(other : Taxon) : Boolean = {
-		if (other == this) {
-			true
-		} else {
-			parents.exists(t => t.isA(other))
-		}
-	}
-
-	override def equals(other : Any) : Boolean = {
-		other match {
-			case t : Taxon => t.name == this.name
-			case _ => false
-		}
-	}
-}
 
 object Taxonomy {
 	val UnknownThing = Taxon("unknown thing", Nil)
