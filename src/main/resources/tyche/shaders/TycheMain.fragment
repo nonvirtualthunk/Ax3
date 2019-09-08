@@ -1,0 +1,60 @@
+#version 150 core
+
+//#extension GL_EXT_gpu_shader4 : enable
+
+uniform sampler2D tex0;
+uniform sampler2D fogTexture;
+uniform vec3 SunPosition = vec3(100.0,0.0,0.0);
+uniform vec3 SunlightColor = vec3(1.0,1.0,1.0);
+
+uniform vec3 SpiritPositions[4];
+
+in vec4 colorV;
+in vec3 positionV;
+in vec2 texCoordV;
+in vec3 normalV;
+in float lightPcntV;
+in vec3 lightColorV;
+
+
+out vec4 o_FragColor;
+
+void main (){
+    vec4 texColor = texture(tex0,texCoordV);
+    if (texColor.a < 0.01) { discard; }
+    vec3 color = texColor.rgb * colorV.rgb;
+    
+    vec3 normal = normalize(normalV);
+
+    vec3 lightVector = normalize(SunPosition - positionV);
+    float lightAngle = dot(normal, lightVector);
+    float sunlightFract = max(lightAngle, 0.0);
+
+    vec3 moonPos = SunPosition * -1.0;
+    vec3 moonVector = normalize(moonPos - positionV);
+    float moonlightAngle = dot(normal, moonVector);
+    float moonlightFract = max(moonlightAngle, 0.0) * 0.65;
+
+    float naturalLightPcnt = max(moonlightFract, sunlightFract);
+    vec3 naturalLightColor = mix(vec3(1.05, 0.99, 0.9), vec3(0.75,0.85,1.05), moonlightFract / max(moonlightFract + sunlightFract, 0.01));
+
+
+    float spiritLightPcnt = 0.0;
+    for (int i = 0; i < 4; ++i) {
+        vec3 slightVector = normalize(SpiritPositions[i] - positionV);
+        float slightAngle = dot(normal, slightVector);
+        spiritLightPcnt = max(slightAngle, spiritLightPcnt);
+    }
+
+    vec3 spiritLightColor = vec3(1.0,1.0,1.0);
+    vec3 localLightColor = mix(spiritLightColor, lightColorV, lightPcntV / (lightPcntV + spiritLightPcnt));
+    float localLightPcnt = min(max(spiritLightPcnt,lightPcntV), 1.0);
+
+    vec3 effLightColor = mix(naturalLightColor, localLightColor, localLightPcnt / (localLightPcnt + naturalLightPcnt));
+
+    vec3 lightedColor = color * effLightColor * min(max(naturalLightPcnt, localLightPcnt), 1.0);
+    //vec3 lightedColor = mix(mix(color, vec3(1.1,0.9,0.8), sunlightFract * 0.1), vec3(0.75,0.85,1.05), moonlightFract * 2.0) * max(max(moonlightFract,sunlightFract),0.1);
+
+    o_FragColor = vec4(min(lightedColor, vec3(1.0,1.0,1.0)), texColor.a * colorV.a);
+    //o_FragColor = vec4(1.0,0.0,0.0,1.0);
+}

@@ -8,24 +8,27 @@ package arx.samvival.application
   */
 
 import arx.Prelude._
-import arx.core.datastructures.voxelregions.voxelregions.VoxelRegion
-import scalaxy.loops._
-import arx.core.vec._
-import arx.core.vec.coordinates.VoxelCoord
 import arx.engine.EngineCore
-import arx.engine.advanced.{Engine, LEngine}
-import arx.engine.control.components.windowing.WindowingControlComponent
-import arx.engine.data.TimeData
-import arx.engine.entity.GameEntity
-import arx.engine.graphics.components.windowing.WindowingGraphicsComponent
+import arx.engine.advanced.LEngine
+import arx.engine.control.components.windowing.{LWindowingControlComponent, WindowingControlComponent}
+import arx.engine.graphics.components.windowing.{LWindowingGraphicsComponent, WindowingGraphicsComponent}
 import arx.engine.graphics.data.PovData
-import arx.graphics.helpers.{Color, HSBA}
-import arx.graphics.pov.TopDownCamera
-import arx.samvival.graphics.SamvivalTestGraphicsComponent
+import arx.engine.lworld.LWorld
+import arx.graphics.pov.PixelCamera
+import arx.samvival.control.MainMapControlModeComponent
+import arx.samvival.game.entities.SVAuxData
+import arx.samvival.game.logic.{Scenario, TerrainGenerator}
+import arx.samvival.graphics.animation.{AnimationGraphicsComponent, TemporalAnimationGraphicsComponent}
+import arx.samvival.graphics.components._
 
 object SamvivalApplication extends LEngine {
-	EngineCore.windowWidth = 1000
-	EngineCore.windowHeight = 1000
+	EngineCore.windowWidth = 1440
+	EngineCore.windowHeight = 900
+
+
+	override def registerTypes(world: LWorld): Unit = {
+		world.registerSubtypesOf[SVAuxData]()
+	}
 
 	override def setUpEngine(): Unit = {
 		graphicsEngine.parallelism = 1
@@ -33,9 +36,9 @@ object SamvivalApplication extends LEngine {
 		serialGameEngine = true
 		serialGraphicsEngine = true
 
-		val pov = new TopDownCamera(20)
-		pov.fovy = 70.0f
-		graphicsWorld[PovData].pov = pov
+		graphicsWorld[PovData].pov = new PixelCamera(512, 0.1f)
+
+		TerrainGenerator.generate(world)
 
 //		gameEngine.addComponent[RogMainGameComponent]
 //		gameEngine.addComponent[RogPhysicsGameComponent]
@@ -45,21 +48,30 @@ object SamvivalApplication extends LEngine {
 //
 //		graphicsEngine.addComponent[TerrainGraphicsComponent]
 //		graphicsEngine.addComponent[EntityGraphicsComponent]
-//		graphicsEngine.addComponent[WindowingGraphicsComponent]
+		graphicsEngine.addComponent[LWindowingGraphicsComponent]
 //		graphicsEngine.addComponent[OverlayGraphicsComponent]
 
-		graphicsEngine.addComponent[SamvivalTestGraphicsComponent]
+//		graphicsEngine.addComponent[SamvivalTestGraphicsComponent]
+		graphicsEngine.addComponent[TileGraphicsComponent]
+		graphicsEngine.addComponent[CullingGraphicsComponent]
+		graphicsEngine.addComponent[TemporalAnimationGraphicsComponent]
+		graphicsEngine.addComponent[AnimationGraphicsComponent]
+		graphicsEngine.addComponent[CharacterGraphicsComponent]
+		graphicsEngine.addComponent[OverlayGraphicsComponent]
+
+		controlEngine.addComponent[MainMapControlModeComponent]
+
 
 //		controlEngine.addComponent[RogCharacterControl]
-//		controlEngine.addComponent[WindowingControlComponent]
+		controlEngine.addComponent[LWindowingControlComponent]
 
-//		gameEngine.eventBus.onEvent {
-//			case AdvanceWorldEvent(dt) =>
-//				synchronized {
-//					gameEngine.updateSerial(dt.inSeconds)
-//					world[TimeData].time += dt
-//				}
-//		}
+		Scenario.loadTestScenario(world)
+	}
+
+
+	override def init(): Unit = {
+		super.init()
+		controlEngine.components.firstOfType[MainMapControlModeComponent].get.pushMode[MainMapControlModeComponent]
 	}
 
 	override def update(deltaSeconds: Float): Unit = {

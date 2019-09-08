@@ -10,6 +10,7 @@ package arx.samvival.game.entities
 import arx.Prelude._
 import scalaxy.loops._
 import arx.core.vec._
+import arx.engine.entity.Taxon
 import arx.engine.lworld.{LEntity, LWorldView}
 import arx.engine.requirement.Descriptor
 
